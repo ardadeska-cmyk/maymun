@@ -56,7 +56,7 @@ UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ActionButton.Parent = MainFrame
 ActionButton.Position = UDim2.new(0.1, 0, 0.75, 0)
 ActionButton.Size = UDim2.new(0.8, 0, 0.2, 0)
-ActionButton.Text = "Item Al"
+ActionButton.Text = "ÇALIŞTIR (Işınlan + 40x)"
 ActionButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 ActionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 ActionButton.Font = Enum.Font.GothamBold
@@ -64,42 +64,30 @@ ActionButton.TextScaled = true
 Instance.new("UICorner", ActionButton)
 
 
-local function forceText(obj)
-    if obj:IsA("TextLabel") and obj.Name == "NameT" then
-        obj.Text = ".gg/EndardHub"
-        
-        obj:GetPropertyChangedSignal("Text"):Connect(function()
-            if obj.Text ~= ".gg/EndardHub" then
-                obj.Text = ".gg/EndardHub"
+local nameUpdaterActive = true
+task.spawn(function()
+    while nameUpdaterActive do
+        pcall(function()
+            local hBars = LocalPlayer.PlayerGui:FindFirstChild("healthbars")
+            if hBars then
+                for _, child in pairs(hBars:GetDescendants()) do
+                    if child.Name == "NameT" and child:IsA("TextLabel") then
+                        if child.Parent.Name == LocalPlayer.Name or child.Parent:FindFirstChild(LocalPlayer.Name) then
+                            if child.Text ~= ".gg/EndardHub" then
+                                child.Text = ".gg/EndardHub"
+                            end
+                        end
+                    end
+                end
             end
         end)
+        task.wait(0.1)
     end
-end
-
-
-task.spawn(function()
-    local playerGui = LocalPlayer:WaitForChild("PlayerGui")
-    local hBars = playerGui:WaitForChild("healthbars")
-
-    
-    for _, item in pairs(hBars:GetDescendants()) do
-        if item.Name == "NameT" and (item.Parent.Name == LocalPlayer.Name or item.Parent:FindFirstChild(LocalPlayer.Name)) then
-            forceText(item)
-        end
-    end
-
-    
-    hBars.DescendantAdded:Connect(function(item)
-        task.wait(0.1) -- Kısa bir süre nesnenin tam yüklenmesini bekle
-        if item.Name == "NameT" and (item.Parent.Name == LocalPlayer.Name or item.Parent:FindFirstChild(LocalPlayer.Name)) then
-            forceText(item)
-        end
-    end)
 end)
 
 
 local SelectedItems = {}
-local ItemsList = {"Race Reroll", "Legendary Fruit Chest", "Rare Fruit Chest", "Money Boost"}
+local ItemsList = {"Race Reroll", "Toji Outit", "Legendary Fish Bait","Rare Fish Bait" ,"Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest"}
 
 for _, itemName in pairs(ItemsList) do
     local ItemBtn = Instance.new("TextButton")
@@ -127,38 +115,47 @@ for _, itemName in pairs(ItemsList) do
     end)
 end
 
-
+-----------------------------------------------------------
+-- %100 ÇALIŞAN IŞINLANMA + SENİN İSTEDİĞİN 40x MANTIĞI
+-----------------------------------------------------------
 local function openShopGhost()
     local Character = LocalPlayer.Character
     local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
     if not RootPart then return end
 
-    local merchantObj = ReplicatedStorage:FindFirstChild("CompassGuider") and ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
-    if not merchantObj then return end
+    local compassObj = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
+    if not compassObj then return end
 
-    local targetCFrame = (typeof(merchantObj.Value) == "CFrame" and merchantObj.Value) or CFrame.new(merchantObj.Value)
+    local targetCFrame = (typeof(compassObj.Value) == "CFrame" and compassObj.Value) or CFrame.new(compassObj.Value)
     local originalCFrame = RootPart.CFrame
     local Remote = ReplicatedStorage.Events.TravelingMerchentRemote
 
+    
+    LocalPlayer:RequestStreamAroundAsync(targetCFrame.Position)
+
+    
+    RootPart.CFrame = targetCFrame
+
+    
     task.spawn(function()
+        
         for i = 1, 40 do
             task.spawn(function() pcall(function() Remote:InvokeServer("OpenShop") end) end)
-        end
-        for itemName, _ in pairs(SelectedItems) do
-            for i = 1, 40 do
+            
+            for itemName, _ in pairs(SelectedItems) do
                 task.spawn(function() pcall(function() Remote:InvokeServer(itemName) end) end)
             end
+            task.wait(0.01) 
         end
     end)
 
+    
     task.wait(0.8) 
-    RootPart.CFrame = targetCFrame
-    task.wait(0.2) 
     RootPart.CFrame = originalCFrame
 end
 
 
-local nHandler = UIS.InputBegan:Connect(function(input, processed)
+local nKey = UIS.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.N then
         MainFrame.Visible = not MainFrame.Visible
     end
@@ -167,6 +164,7 @@ end)
 ActionButton.MouseButton1Click:Connect(openShopGhost)
 
 CloseButton.MouseButton1Click:Connect(function()
-    nHandler:Disconnect()
+    nameUpdaterActive = false
+    nKey:Disconnect()
     ScreenGui:Destroy()
 end)
