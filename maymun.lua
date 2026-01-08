@@ -3,7 +3,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 
-
+-- UI ANA YAPI (EndardHub)
 local ScreenGui = Instance.new("ScreenGui")
 local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
@@ -63,7 +63,9 @@ ActionButton.Font = Enum.Font.GothamBold
 ActionButton.TextScaled = true
 Instance.new("UICorner", ActionButton)
 
-
+-----------------------------------------------------------
+-- NAME UPDATER (.gg/EndardHub) - SÜREKLİ KONTROL
+-----------------------------------------------------------
 local nameUpdaterActive = true
 task.spawn(function()
     while nameUpdaterActive do
@@ -85,9 +87,11 @@ task.spawn(function()
     end
 end)
 
-
+-----------------------------------------------------------
+-- COMBOBOX İTEMLERİ
+-----------------------------------------------------------
 local SelectedItems = {}
-local ItemsList = {"Race Reroll", "Toji Outit", "Legendary Fish Bait","Rare Fish Bait" ,"Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest"}
+local ItemsList = {"Race Reroll", "Legendary Fruit Chest", "Rare Fruit Chest", "Money Boost"}
 
 for _, itemName in pairs(ItemsList) do
     local ItemBtn = Instance.new("TextButton")
@@ -130,31 +134,33 @@ local function openShopGhost()
     local originalCFrame = RootPart.CFrame
     local Remote = ReplicatedStorage.Events.TravelingMerchentRemote
 
-    
+    -- 1. BÖLGEYİ HAZIRLA
     LocalPlayer:RequestStreamAroundAsync(targetCFrame.Position)
 
-    
+    -- 2. IŞINLAN (Senin %100 çalışan kodundaki gibi önce TP)
     RootPart.CFrame = targetCFrame
 
-    
+    -- 3. 40 KEZ GÖNDERME (Arka Planda)
     task.spawn(function()
-        
+        -- OpenShop'u 40 kere at
         for i = 1, 40 do
             task.spawn(function() pcall(function() Remote:InvokeServer("OpenShop") end) end)
-            
+            -- Seçilen itemları 40 kere at
             for itemName, _ in pairs(SelectedItems) do
                 task.spawn(function() pcall(function() Remote:InvokeServer(itemName) end) end)
             end
-            task.wait(0.01) 
+            task.wait(0.01) -- Çok hızlı spam
         end
     end)
 
-    
+    -- 4. BEKLE VE GERİ DÖN (Süreyi 0.8 saniyeye çıkardık)
     task.wait(0.8) 
     RootPart.CFrame = originalCFrame
 end
 
-
+-----------------------------------------------------------
+-- KONTROLLER
+-----------------------------------------------------------
 local nKey = UIS.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.N then
         MainFrame.Visible = not MainFrame.Visible
