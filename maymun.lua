@@ -91,7 +91,7 @@ end)
 -- COMBOBOX İTEMLERİ
 -----------------------------------------------------------
 local SelectedItems = {}
-local ItemsList = {"Race Reroll", "Coffin Boat", "Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Toji Outfit"}
+local ItemsList = {"Race Reroll", "Coffin Boat", "Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
 
 for _, itemName in pairs(ItemsList) do
     local ItemBtn = Instance.new("TextButton")
