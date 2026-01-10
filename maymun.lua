@@ -1,116 +1,184 @@
-local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
--- UI ANA YAPI (EndardHub)
+
+local targetNames = {
+    ["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, 
+    ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true
+}
+local ItemsList = {"Race Reroll", "Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
+local NPCsFolder = workspace:FindFirstChild("NPCs")
+local SelectedItems = {}
+
+_G.AutoAim = false
+_G.BossESP = true
+_G.HubActive = true
+
+
 local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local ActionButton = Instance.new("TextButton")
-local CloseButton = Instance.new("TextButton")
-local ComboContainer = Instance.new("ScrollingFrame")
-local UIListLayout = Instance.new("UIListLayout")
-
-ScreenGui.Name = "EndardHub_UI"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Name = "EndardHub_Ultimate"
+ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
-MainFrame.Name = "MainFrame"
+local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.Position = UDim2.new(0.5, -125, 0.4, 0)
-MainFrame.Size = UDim2.new(0, 250, 0, 220)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -225)
+MainFrame.Size = UDim2.new(0, 260, 0, 480) 
 MainFrame.Active = true
 MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(60, 60, 65)
 
+local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundTransparency = 1
 Title.Text = "EndardHub"
-Title.TextColor3 = Color3.fromRGB(0, 255, 150)
+Title.TextColor3 = Color3.fromRGB(0, 255, 170)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+Title.TextSize = 22
 
-CloseButton.Parent = MainFrame
-CloseButton.Position = UDim2.new(1, -30, 0, 5)
-CloseButton.Size = UDim2.new(0, 25, 0, 25)
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-CloseButton.BackgroundTransparency = 1
-CloseButton.TextSize = 22
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = MainFrame
+CloseBtn.Position = UDim2.new(1, -30, 0, 10)
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 18
 
-ComboContainer.Name = "ComboContainer"
-ComboContainer.Parent = MainFrame
-ComboContainer.BackgroundTransparency = 1
-ComboContainer.Position = UDim2.new(0.05, 0, 0.2, 0)
-ComboContainer.Size = UDim2.new(0.9, 0, 0.45, 0)
-ComboContainer.CanvasSize = UDim2.new(0, 0, 1.5, 0)
-ComboContainer.ScrollBarThickness = 2
+local ContentContainer = Instance.new("ScrollingFrame")
+ContentContainer.Parent = MainFrame
+ContentContainer.BackgroundTransparency = 1
+ContentContainer.Position = UDim2.new(0, 15, 0, 60)
+ContentContainer.Size = UDim2.new(1, -30, 1, -70)
+ContentContainer.CanvasSize = UDim2.new(0, 0, 1.8, 0) 
+ContentContainer.ScrollBarThickness = 2
+ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
 
-UIListLayout.Parent = ComboContainer
-UIListLayout.Padding = UDim.new(0, 5)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = ContentContainer
+UIList.Padding = UDim.new(0, 8)
 
-ActionButton.Parent = MainFrame
-ActionButton.Position = UDim2.new(0.1, 0, 0.75, 0)
-ActionButton.Size = UDim2.new(0.8, 0, 0.2, 0)
-ActionButton.Text = "ÇALIŞTIR (Işınlan + 40x)"
-ActionButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-ActionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ActionButton.Font = Enum.Font.GothamBold
-ActionButton.TextScaled = true
-Instance.new("UICorner", ActionButton)
 
------------------------------------------------------------
--- NAME UPDATER (.gg/EndardHub) - SÜREKLİ KONTROL
------------------------------------------------------------
-local nameUpdaterActive = true
-task.spawn(function()
-    while nameUpdaterActive do
-        pcall(function()
-            local hBars = LocalPlayer.PlayerGui:FindFirstChild("healthbars")
-            if hBars then
-                for _, child in pairs(hBars:GetDescendants()) do
-                    if child.Name == "NameT" and child:IsA("TextLabel") then
-                        if child.Parent.Name == LocalPlayer.Name or child.Parent:FindFirstChild(LocalPlayer.Name) then
-                            if child.Text ~= ".gg/EndardHub" then
-                                child.Text = ".gg/EndardHub"
-                            end
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(0.1)
+local function createToggle(text, defaultState, callback)
+    local Wrapper = Instance.new("Frame")
+    Wrapper.Size = UDim2.new(1, 0, 0, 35)
+    Wrapper.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Wrapper.Parent = ContentContainer
+    Instance.new("UICorner", Wrapper).CornerRadius = UDim.new(0, 6)
+    
+    local Label = Instance.new("TextLabel")
+    Label.Parent = Wrapper
+    Label.Size = UDim2.new(0.6, 0, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.Font = Enum.Font.GothamSemibold
+    Label.TextSize = 12
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local SwitchBg = Instance.new("TextButton")
+    SwitchBg.Parent = Wrapper
+    SwitchBg.Size = UDim2.new(0, 36, 0, 20)
+    SwitchBg.Position = UDim2.new(1, -42, 0.5, -10)
+    SwitchBg.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(60, 60, 65)
+    SwitchBg.Text = ""
+    SwitchBg.AutoButtonColor = false
+    Instance.new("UICorner", SwitchBg).CornerRadius = UDim.new(1, 0)
+
+    local Knob = Instance.new("Frame")
+    Knob.Parent = SwitchBg
+    Knob.Size = UDim2.new(0, 14, 0, 14)
+    Knob.Position = defaultState and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+    local isOn = defaultState
+    local function setToggle(newState)
+        isOn = newState
+        local targetPos = isOn and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+        local targetColor = isOn and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(60, 60, 65)
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        TweenService:Create(SwitchBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        callback(isOn)
     end
+    SwitchBg.MouseButton1Click:Connect(function() setToggle(not isOn) end)
+    return setToggle
+end
+
+local function createActionButton(text, color, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = ContentContainer
+    Btn.Size = UDim2.new(1, 0, 0, 35)
+    Btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 55)
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 13
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Btn.MouseButton1Click:Connect(callback)
+    return Btn
+end
+
+
+local updateAimToggle = createToggle("Auto Aim [Caps Lock]", false, function(state) _G.AutoAim = state end)
+createToggle("Boss ESP", true, function(state) _G.BossESP = state end)
+
+createActionButton("Mihawk & Roger Tarama", nil, function()
+    local r = LocalPlayer.Character.HumanoidRootPart
+    local old = r.CFrame
+    LocalPlayer.Character:PivotTo(workspace.Islands["Umi Island"]:GetPivot() * CFrame.new(0, 55, 0))
+    task.wait(0.5) r.CFrame = old
 end)
 
------------------------------------------------------------
--- COMBOBOX İTEMLERİ
------------------------------------------------------------
-local SelectedItems = {}
-local ItemsList = {"Race Reroll", "Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
+createActionButton("Juzo Tarama", nil, function()
+    local r = LocalPlayer.Character.HumanoidRootPart
+    local old = r.CFrame
+    LocalPlayer.Character:PivotTo(workspace.Islands["Turtleback Cave"]:GetPivot() * CFrame.new(0, 15, 0))
+    task.wait(0.5) r.CFrame = old
+end)
 
+-- MERCHANT KISMI
+local Divider = Instance.new("Frame")
+Divider.Parent = ContentContainer
+Divider.Size = UDim2.new(1, 0, 0, 1)
+Divider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+
+local MerchantTitle = Instance.new("TextLabel")
+MerchantTitle.Parent = ContentContainer
+MerchantTitle.Size = UDim2.new(1, 0, 0, 20)
+MerchantTitle.Text = "MERCHANT ITEMS"
+MerchantTitle.TextColor3 = Color3.fromRGB(0, 255, 170)
+MerchantTitle.Font = Enum.Font.GothamBold
+MerchantTitle.BackgroundTransparency = 1
+MerchantTitle.TextSize = 12
+
+-- Item Seçim Listesi (Combobox Mantığı)
 for _, itemName in pairs(ItemsList) do
     local ItemBtn = Instance.new("TextButton")
-    ItemBtn.Name = itemName
-    ItemBtn.Parent = ComboContainer
-    ItemBtn.Size = UDim2.new(1, -5, 0, 25)
+    ItemBtn.Parent = ContentContainer
+    ItemBtn.Size = UDim2.new(1, 0, 0, 25)
     ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
     ItemBtn.Text = itemName
-    ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    ItemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
     ItemBtn.Font = Enum.Font.Gotham
-    ItemBtn.TextSize = 12
-    ItemBtn.TextWrapped = true
+    ItemBtn.TextSize = 11
     Instance.new("UICorner", ItemBtn)
 
     ItemBtn.MouseButton1Click:Connect(function()
         if SelectedItems[itemName] then
             SelectedItems[itemName] = nil
             ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-            ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            ItemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
         else
             SelectedItems[itemName] = true
             ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
@@ -119,14 +187,9 @@ for _, itemName in pairs(ItemsList) do
     end)
 end
 
------------------------------------------------------------
--- %100 ÇALIŞAN IŞINLANMA + SENİN İSTEDİĞİN 40x MANTIĞI
------------------------------------------------------------
-local function openShopGhost()
-    local Character = LocalPlayer.Character
-    local RootPart = Character and Character:FindFirstChild("HumanoidRootPart")
-    if not RootPart then return end
-
+-- ÇALIŞTIR BUTONU (Merchant Işınlanma + 40x)
+createActionButton("ÇALIŞTIR (Işınlan + 40x)", Color3.fromRGB(0, 100, 200), function()
+    local RootPart = LocalPlayer.Character.HumanoidRootPart
     local compassObj = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
     if not compassObj then return end
 
@@ -134,43 +197,82 @@ local function openShopGhost()
     local originalCFrame = RootPart.CFrame
     local Remote = ReplicatedStorage.Events.TravelingMerchentRemote
 
-    -- 1. BÖLGEYİ HAZIRLA
     LocalPlayer:RequestStreamAroundAsync(targetCFrame.Position)
-
-    -- 2. IŞINLAN (Senin %100 çalışan kodundaki gibi önce TP)
     RootPart.CFrame = targetCFrame
 
-    -- 3. 40 KEZ GÖNDERME (Arka Planda)
     task.spawn(function()
-        -- OpenShop'u 40 kere at
         for i = 1, 40 do
             task.spawn(function() pcall(function() Remote:InvokeServer("OpenShop") end) end)
-            -- Seçilen itemları 40 kere at
             for itemName, _ in pairs(SelectedItems) do
                 task.spawn(function() pcall(function() Remote:InvokeServer(itemName) end) end)
             end
-            task.wait(0.01) -- Çok hızlı spam
+            task.wait(0.01)
         end
     end)
-
-    -- 4. BEKLE VE GERİ DÖN (Süreyi 0.8 saniyeye çıkardık)
-    task.wait(0.8) 
+    task.wait(0.8)
     RootPart.CFrame = originalCFrame
-end
+end)
 
------------------------------------------------------------
--- KONTROLLER
------------------------------------------------------------
-local nKey = UIS.InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == Enum.KeyCode.N then
-        MainFrame.Visible = not MainFrame.Visible
+-- [[ SİSTEMLER (NAME UPDATER & ESP & AIM) ]] --
+task.spawn(function()
+    while _G.HubActive do
+        pcall(function()
+            local hBars = LocalPlayer.PlayerGui:FindFirstChild("healthbars")
+            if hBars then
+                for _, child in pairs(hBars:GetDescendants()) do
+                    if child.Name == "NameT" and child.Text ~= ".gg/EndardHub" then
+                        if child.Parent.Name == LocalPlayer.Name or child.Parent:FindFirstChild(LocalPlayer.Name) then
+                            child.Text = ".gg/EndardHub"
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(0.2)
     end
 end)
 
-ActionButton.MouseButton1Click:Connect(openShopGhost)
+UserInputService.InputBegan:Connect(function(input, proc)
+    if proc then return end
+    if input.KeyCode == Enum.KeyCode.CapsLock and updateAimToggle then updateAimToggle(not _G.AutoAim)
+    elseif input.KeyCode == Enum.KeyCode.N then MainFrame.Visible = not MainFrame.Visible end
+end)
 
-CloseButton.MouseButton1Click:Connect(function()
-    nameUpdaterActive = false
-    nKey:Disconnect()
+CloseBtn.MouseButton1Click:Connect(function()
+    _G.HubActive = false; _G.AutoAim = false; _G.BossESP = false
     ScreenGui:Destroy()
+end)
+
+-- ESP & Aim Lojikleri (Karakter Takibi ve Render)
+RunService.RenderStepped:Connect(function()
+    if not _G.HubActive or not _G.AutoAim or not NPCsFolder then return end
+    local dist, target = math.huge, nil
+    for _, npc in pairs(NPCsFolder:GetChildren()) do
+        if targetNames[npc.Name] and npc.Name ~= "Robo" and npc:FindFirstChild("HumanoidRootPart") then
+            local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d; target = npc end
+        end
+    end
+    if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.HumanoidRootPart.Position) end
+end)
+
+-- ESP Tarama Döngüsü
+task.spawn(function()
+    while task.wait(1) do
+        if _G.HubActive and _G.BossESP and NPCsFolder then
+            for _, npc in pairs(NPCsFolder:GetChildren()) do
+                if targetNames[npc.Name] and not npc:FindFirstChild("ESP_Marker") then
+                    local marker = Instance.new("StringValue", npc); marker.Name = "ESP_Marker"
+                    local hl = Instance.new("Highlight", npc); hl.Name = "ESP_Highlight"; hl.FillColor = Color3.fromRGB(255, 0, 0); hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    task.spawn(function()
+                        while npc.Parent and _G.BossESP do 
+                            hl.OutlineColor = Color3.fromHSV(tick()%5/5, 1, 1)
+                            task.wait() 
+                        end
+                        if hl then hl:Destroy() end
+                    end)
+                end
+            end
+        end
+    end
 end)
