@@ -1,0 +1,338 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local targetNames = {
+    ["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, 
+    ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true
+}
+
+-- YENİ VE TAM EŞYA LİSTESİ
+local ItemsList = {
+    "Special Tailor Token", "Hero's Costume", "Crab Cutlass", "Prodigy Sorcerer Costume", 
+    "Lifa's Outfit", "Raiui", "Knight's Gauntlet", "Hunter's Journal", "Spare Fruit Bag", 
+    "Merchants Banana Rod", "Kessui", "Race Reroll", "Red Cloud Costume", "SP Reset Essence", 
+    "Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker", "Iceborn Headband", 
+    "Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", 
+    "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"
+}
+
+local NPCsFolder = workspace:FindFirstChild("NPCs")
+local SelectedItems = {}
+
+_G.AutoAim = false
+_G.BossESP = true
+_G.HubActive = true
+_G.AutoMerchant = false 
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "EndardHub_Ultimate_V4"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -225)
+MainFrame.Size = UDim2.new(0, 260, 0, 520) 
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(60, 60, 65)
+
+local Title = Instance.new("TextLabel")
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.BackgroundTransparency = 1
+Title.Text = "EndardHub"
+Title.TextColor3 = Color3.fromRGB(0, 255, 170)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = MainFrame
+CloseBtn.Position = UDim2.new(1, -30, 0, 10)
+CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 18
+
+local ContentContainer = Instance.new("ScrollingFrame")
+ContentContainer.Parent = MainFrame
+ContentContainer.BackgroundTransparency = 1
+ContentContainer.Position = UDim2.new(0, 15, 0, 60)
+ContentContainer.Size = UDim2.new(1, -30, 1, -70)
+ContentContainer.ScrollBarThickness = 2
+ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
+ContentContainer.CanvasSize = UDim2.new(0, 0, 0, 0) -- Otomatik ayarlanacak
+
+local UIList = Instance.new("UIListLayout")
+UIList.Parent = ContentContainer
+UIList.Padding = UDim.new(0, 8)
+
+-- Liste boyutu değiştikçe scroll alanını güncelle
+UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ContentContainer.CanvasSize = UDim2.new(0, 0, 0, UIList.AbsoluteContentSize.Y + 20)
+end)
+
+-- Fonksiyonlar
+local function createToggle(text, defaultState, callback)
+    local Wrapper = Instance.new("Frame")
+    Wrapper.Size = UDim2.new(1, 0, 0, 35)
+    Wrapper.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    Wrapper.Parent = ContentContainer
+    Instance.new("UICorner", Wrapper).CornerRadius = UDim.new(0, 6)
+    
+    local Label = Instance.new("TextLabel")
+    Label.Parent = Wrapper
+    Label.Size = UDim2.new(0.6, 0, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    Label.Font = Enum.Font.GothamSemibold
+    Label.TextSize = 12
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    local SwitchBg = Instance.new("TextButton")
+    SwitchBg.Parent = Wrapper
+    SwitchBg.Size = UDim2.new(0, 36, 0, 20)
+    SwitchBg.Position = UDim2.new(1, -42, 0.5, -10)
+    SwitchBg.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(60, 60, 65)
+    SwitchBg.Text = ""
+    SwitchBg.AutoButtonColor = false
+    Instance.new("UICorner", SwitchBg).CornerRadius = UDim.new(1, 0)
+
+    local Knob = Instance.new("Frame")
+    Knob.Parent = SwitchBg
+    Knob.Size = UDim2.new(0, 14, 0, 14)
+    Knob.Position = defaultState and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+    Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+    local isOn = defaultState
+    local function setToggle(newState)
+        isOn = newState
+        local targetPos = isOn and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
+        local targetColor = isOn and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(60, 60, 65)
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        TweenService:Create(SwitchBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        callback(isOn)
+    end
+    SwitchBg.MouseButton1Click:Connect(function() setToggle(not isOn) end)
+    return setToggle
+end
+
+local function createActionButton(text, color, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = ContentContainer
+    Btn.Size = UDim2.new(1, 0, 0, 35)
+    Btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 55)
+    Btn.Text = text
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 13
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Btn.MouseButton1Click:Connect(callback)
+    return Btn
+end
+
+local updateAimToggle = createToggle("Auto Aim [Caps Lock]", false, function(state) _G.AutoAim = state end)
+createToggle("Boss ESP", true, function(state) _G.BossESP = state end)
+
+createActionButton("Mihawk & Roger Tarama", nil, function()
+    local r = LocalPlayer.Character.HumanoidRootPart
+    local old = r.CFrame
+    LocalPlayer.Character:PivotTo(workspace.IsIsland["Umi Island"]:GetPivot() * CFrame.new(0, 55, 0))
+    task.wait(0.5) r.CFrame = old
+end)
+
+-- MERCHANT KISMI
+local Divider = Instance.new("Frame")
+Divider.Parent = ContentContainer
+Divider.Size = UDim2.new(1, 0, 0, 1)
+Divider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+
+local MerchantTitle = Instance.new("TextLabel")
+MerchantTitle.Parent = ContentContainer
+MerchantTitle.Size = UDim2.new(1, 0, 0, 25)
+MerchantTitle.Text = "MERCHANT ITEMS"
+MerchantTitle.TextColor3 = Color3.fromRGB(0, 255, 170)
+MerchantTitle.Font = Enum.Font.GothamBold
+MerchantTitle.BackgroundTransparency = 1
+MerchantTitle.TextSize = 13
+
+-- Item Seçim Listesi (Gelişmiş Görünüm)
+for _, itemName in pairs(ItemsList) do
+    local cleanName = itemName:gsub("%s+", " ") -- Fazla boşlukları temizle
+    local ItemBtn = Instance.new("TextButton")
+    ItemBtn.Parent = ContentContainer
+    ItemBtn.Size = UDim2.new(1, 0, 0, 25)
+    ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    ItemBtn.Text = cleanName
+    ItemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    ItemBtn.Font = Enum.Font.Gotham
+    ItemBtn.TextSize = 10
+    Instance.new("UICorner", ItemBtn)
+
+    ItemBtn.MouseButton1Click:Connect(function()
+        if SelectedItems[cleanName] then
+            SelectedItems[cleanName] = nil
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            ItemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+        else
+            SelectedItems[cleanName] = true
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+            ItemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
+    end)
+end
+
+-- [[ MERKEZİ MERCHANT FONKSİYONU ]] --
+local function ExecuteMerchantTrade()
+    local RootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not RootPart then return end
+
+    local compassObj = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
+    if not compassObj then return end
+
+    local targetCFrame = (typeof(compassObj.Value) == "CFrame" and compassObj.Value) or CFrame.new(compassObj.Value)
+    local originalCFrame = RootPart.CFrame
+    local Remote = ReplicatedStorage.Events.TravelingMerchentRemote
+
+    -- Işınlanma ve Hazırlık
+    LocalPlayer:RequestStreamAroundAsync(targetCFrame.Position)
+    RootPart.CFrame = targetCFrame
+    task.wait(0.2) -- Sunucunun konumunuzu onaylaması için kısa bekleme
+
+    -- Satın Alma İşlemi
+    task.spawn(function()
+        -- Önce Dükkanı Aç
+        pcall(function() Remote:InvokeServer("OpenShop") end)
+        task.wait(0.1)
+        
+        -- Döngüsel Satın Alma
+        for i = 1, 50 do
+            if not _G.HubActive then break end
+            for itemName, _ in pairs(SelectedItems) do
+                task.spawn(function() 
+                    pcall(function() Remote:InvokeServer(itemName) end) 
+                end)
+            end
+            task.wait(0.01)
+        end
+    end)
+    
+    task.wait(1.2) -- Tüm işlemlerin bitmesini bekle
+    if RootPart then
+        RootPart.CFrame = originalCFrame
+    end
+end
+
+createActionButton("MANUEL ÇALIŞTIR", Color3.fromRGB(0, 100, 200), function()
+    ExecuteMerchantTrade()
+end)
+
+createToggle("Oto Merchant (2x + 20s CD)", false, function(state)
+    _G.AutoMerchant = state
+end)
+
+-- [[ GÜNCELLENMİŞ OTOMATİK DÖNGÜ ]] --
+task.spawn(function()
+    while _G.HubActive do
+        local success, err = pcall(function()
+            if _G.AutoMerchant then
+                local compassObj = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
+                local isActive = false
+                
+                if compassObj then
+                    -- Çoklu isEnabled kontrolü
+                    if compassObj:GetAttribute("isEnabled") == true then isActive = true
+                    elseif pcall(function() return compassObj.isEnabled end) and compassObj.isEnabled == true then isActive = true
+                    elseif compassObj:FindFirstChild("isEnabled") and (compassObj.isEnabled.Value == true or compassObj.isEnabled.Value == 1) then isActive = true
+                    end
+                end
+
+                if isActive then
+                    ExecuteMerchantTrade()
+                    task.wait(3)
+                    if _G.AutoMerchant then ExecuteMerchantTrade() end
+                    task.wait(20) -- Cooldown
+                else
+                    task.wait(1)
+                end
+            else
+                task.wait(1)
+            end
+        end)
+        if not success then task.wait(1) end
+    end
+end)
+
+-- [[ SİSTEMLER (NAME UPDATER & ESP & AIM) ]] --
+task.spawn(function()
+    while _G.HubActive do
+        pcall(function()
+            local hBars = LocalPlayer.PlayerGui:FindFirstChild("healthbars")
+            if hBars then
+                for _, child in pairs(hBars:GetDescendants()) do
+                    if child.Name == "NameT" and child.Text ~= ".gg/EndardHub" then
+                        if child.Parent.Name == LocalPlayer.Name or child.Parent:FindFirstChild(LocalPlayer.Name) then
+                            child.Text = ".gg/EndardHub"
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(0.2)
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, proc)
+    if proc then return end
+    if input.KeyCode == Enum.KeyCode.CapsLock and updateAimToggle then updateAimToggle(not _G.AutoAim)
+    elseif input.KeyCode == Enum.KeyCode.N then MainFrame.Visible = not MainFrame.Visible end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    _G.HubActive = false; _G.AutoAim = false; _G.BossESP = false; _G.AutoMerchant = false
+    ScreenGui:Destroy()
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not _G.HubActive or not _G.AutoAim or not NPCsFolder then return end
+    local dist, target = math.huge, nil
+    for _, npc in pairs(NPCsFolder:GetChildren()) do
+        if targetNames[npc.Name] and npc.Name ~= "Robo" and npc:FindFirstChild("HumanoidRootPart") then
+            local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d; target = npc end
+        end
+    end
+    if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.HumanoidRootPart.Position) end
+end)
+
+task.spawn(function()
+    while task.wait(1) do
+        if _G.HubActive and _G.BossESP and NPCsFolder then
+            for _, npc in pairs(NPCsFolder:GetChildren()) do
+                if targetNames[npc.Name] and not npc:FindFirstChild("ESP_Marker") then
+                    local marker = Instance.new("StringValue", npc); marker.Name = "ESP_Marker"
+                    local hl = Instance.new("Highlight", npc); hl.Name = "ESP_Highlight"; hl.FillColor = Color3.fromRGB(255, 0, 0); hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    task.spawn(function()
+                        while npc.Parent and _G.BossESP do 
+                            hl.OutlineColor = Color3.fromHSV(tick()%5/5, 1, 1)
+                            task.wait() 
+                        end
+                        if hl then hl:Destroy() end
+                    end)
+                end
+            end
+        end
+    end
+end)
